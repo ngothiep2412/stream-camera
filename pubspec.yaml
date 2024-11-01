@@ -22,6 +22,7 @@ dependencies:
   dio: ^5.7.0
   network_discovery: ^1.0.0
   flutter_dotenv: ^5.2.1
+  chewie: ^1.8.5
   # permission_handler: ^11.3.1
   # dart_ping: ^9.0.1
 
