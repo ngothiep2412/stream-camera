@@ -1,10 +1,12 @@
 import 'dart:async';
+import 'package:camera/app/constants/app_constants.dart';
+import 'package:camera/app/modules/home/controllers/file_download_controller.dart';
 import 'package:camera/app/modules/home/views/video.dart';
 import 'package:chewie/chewie.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
-// import 'package:flutter_dotenv/flutter_dotenv.dart';
 import 'package:get/get.dart';
+import 'package:screen_recorder/screen_recorder.dart';
 import 'package:video_player/video_player.dart';
 
 class HomeController extends GetxController {
@@ -26,6 +28,9 @@ class HomeController extends GetxController {
 
   String _buffer = '';
   Timer? _debounceTimer;
+  RxBool isRecording = false.obs;
+  RxBool isActive = false.obs;
+  RxBool isExporting = false.obs;
 
   RxString errorText = ''.obs;
 
@@ -36,6 +41,11 @@ class HomeController extends GetxController {
 
   Rx<ChewieController?> chewieController = Rx<ChewieController?>(null);
   RxBool isVideoInitialized = false.obs;
+
+  final ScreenRecorderController screenRecorder = ScreenRecorderController();
+
+  final FileDownloadController fileController =
+      Get.put(FileDownloadController());
 
   bool checkInvalidUsernamePassword() {
     if (usernameTxt.value.text.isEmpty || passwordTxt.value.text.isEmpty) {
@@ -89,10 +99,80 @@ class HomeController extends GetxController {
 
   void _processBarcode() {
     if (_buffer.isNotEmpty) {
-      scannedBarcode.value = _buffer;
-      barcodeHistory.insert(0, '${DateTime.now()}: $_buffer');
+      switch (_buffer.toLowerCase()) {
+        case barcodeStart:
+          if (!isRecording.value) {
+            startScreenRecording();
+            isRecording.value = true;
+            isActive.value = true;
+          }
+          break;
+
+        case barcodeEnd:
+          if (isRecording.value) {
+            stopScreenRecording();
+            isRecording.value = false;
+            isActive.value = false;
+          }
+          break;
+
+        default:
+          if (isActive.value) {
+            scannedBarcode.value = _buffer;
+            barcodeHistory.insert(0, '${DateTime.now()}: $_buffer');
+          }
+          break;
+      }
 
       _buffer = '';
+    }
+  }
+
+  Future<void> startScreenRecording() async {
+    try {
+      screenRecorder.start();
+      debugPrint('Started recording');
+    } catch (e) {
+      debugPrint('Error starting recording: $e');
+    }
+  }
+
+  Future<void> stopScreenRecording() async {
+    try {
+      screenRecorder.stop();
+      isExporting.value = true;
+
+      final gif = await screenRecorder.exporter.exportGif();
+      if (gif != null) {
+        // Get.dialog(
+        //   AlertDialog(
+        //     title: const Text('Recording Result'),
+        //     content: Image.memory(Uint8List.fromList(gif)),
+        //     actions: [
+        //       TextButton(
+        //         onPressed: () {
+        //           screenRecorder.exporter.clear();
+        //           Get.back();
+        //         },
+        //         child: const Text('Close'),
+        //       ),
+        //     ],
+        //   ),
+        // );
+        final gif = await screenRecorder.exporter.exportGif();
+        if (gif != null) {
+          fileController.downloadBytes(
+              bytes: Uint8List.fromList(gif),
+              fileName: 'recording.gif',
+              mimeType: 'image/gif');
+        }
+      }
+
+      isExporting.value = false;
+      debugPrint('Recording stopped and exported');
+    } catch (e) {
+      debugPrint('Recording stopped and exported');
+      isExporting.value = false;
     }
   }
 
@@ -109,7 +189,7 @@ class HomeController extends GetxController {
       if (videoController.value.isInitialized) {
         chewieController.value = ChewieController(
           videoPlayerController: videoController,
-          autoPlay: true,
+          autoPlay: false,
           allowMuting: false,
           aspectRatio: videoController.value.aspectRatio,
           errorBuilder: (context, errorMessage) {

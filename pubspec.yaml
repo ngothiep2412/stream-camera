@@ -14,7 +14,7 @@ dependencies:
   # onvif_dart: ^1.1.1
   flutter:
     sdk: flutter
-  easy_onvif: ^2.2.0+2
+  # easy_onvif: ^2.2.0+2
   video_player: ^2.9.1
   network_info_plus: ^3.0.1
   loggy:
@@ -23,6 +23,9 @@ dependencies:
   network_discovery: ^1.0.0
   flutter_dotenv: ^5.2.1
   chewie: ^1.8.5
+  # flutter_screen_recording: ^2.0.17
+  screen_recorder: ^0.3.0
+  # ed_screen_recorder: ^0.0.15
   # permission_handler: ^11.3.1
   # dart_ping: ^9.0.1
 
@@ -36,4 +39,3 @@ flutter:
   assets:
   - assets/images/
   - assets/.env
-

@@ -3,6 +3,7 @@ import 'package:chewie/chewie.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:get/get.dart';
+import 'package:screen_recorder/screen_recorder.dart';
 
 class VideoView extends StatefulWidget {
   const VideoView({super.key});
@@ -32,6 +33,31 @@ class _VideoViewState extends State<VideoView> {
           title: const Text(
             'Barcode Scanner',
           ),
+          actions: [
+            Obx(
+              () => Row(
+                children: [
+                  if (_homeController.isRecording.value)
+                    const Icon(
+                      Icons.fiber_manual_record,
+                      color: Colors.red,
+                    ),
+                  if (_homeController.isExporting.value)
+                    const Padding(
+                      padding: EdgeInsets.all(8.0),
+                      child: SizedBox(
+                        width: 20,
+                        height: 20,
+                        child: CircularProgressIndicator(
+                          strokeAlign: 2,
+                          color: Colors.white,
+                        ),
+                      ),
+                    )
+                ],
+              ),
+            )
+          ],
         ),
         body: GestureDetector(
           onTap: () {},
@@ -40,34 +66,41 @@ class _VideoViewState extends State<VideoView> {
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                Stack(
-                  children: [
-                    Container(
-                        // color: Colors.red,
-                        width: double.infinity,
-                        height: 300,
-                        child: Obx(() =>
-                            _homeController.isVideoInitialized.value
+                ScreenRecorder(
+                  height: MediaQuery.sizeOf(context).height,
+                  width: MediaQuery.sizeOf(context).width,
+                  controller: _homeController.screenRecorder,
+                  child: Stack(
+                    children: [
+                      Center(
+                        child: SizedBox(
+                            // color: Colors.red,
+                            width: 1200,
+                            height: 300,
+                            child: Obx(() => _homeController
+                                    .isVideoInitialized.value
                                 ? Chewie(
                                     controller:
                                         _homeController.chewieController.value!)
                                 : const CircularProgressIndicator())),
-                    Align(
-                      alignment: const Alignment(-0.5, 0.5),
-                      child: Obx(
-                        () => Text(
-                          _homeController.scannedBarcode.value.isEmpty
-                              ? 'Waiting for scan ...'
-                              : _homeController.scannedBarcode.value,
-                          style: const TextStyle(
-                            fontSize: 18,
-                            color: Colors.greenAccent,
-                            fontWeight: FontWeight.bold,
+                      ),
+                      Align(
+                        alignment: const Alignment(-0.5, 0.5),
+                        child: Obx(
+                          () => Text(
+                            _homeController.scannedBarcode.value.isEmpty
+                                ? 'Waiting for scan ...'
+                                : "Your barcode: ${_homeController.scannedBarcode.value}",
+                            style: const TextStyle(
+                              fontSize: 18,
+                              color: Colors.greenAccent,
+                              fontWeight: FontWeight.bold,
+                            ),
                           ),
                         ),
-                      ),
-                    )
-                  ],
+                      )
+                    ],
+                  ),
                 ),
                 const SizedBox(height: 24),
                 Expanded(
